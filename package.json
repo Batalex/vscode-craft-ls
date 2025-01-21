@@ -1,8 +1,8 @@
 {
     "name": "craft-ls",
     "displayName": "Craft-ls",
-    "description": "Linting support for python files using `craft-ls`.",
-    "version": "2022.0.0-dev",
+    "description": "A Language Server Protocol implementation for *craft files.",
+    "version": "2025.1.0",
     "preview": true,
     "serverInfo": {
         "name": "Craft-ls",
@@ -10,13 +10,13 @@
     },
     "publisher": "abatisse",
     "license": "MIT",
-    "homepage": "https://github.com/<my-github>/<my-extension-project>",
+    "homepage": "https://github.com/Batalex/vscode-craft-ls",
     "repository": {
         "type": "git",
-        "url": "https://github.com/<my-github>/<my-extension-project>.git"
+        "url": "https://github.com/Batalex/vscode-craft-ls.git"
     },
     "bugs": {
-        "url": "https://github.com/<my-github>/<my-extension-project>/issues"
+        "url": "https://github.com/Batalex/vscode-craft-ls/issues"
     },
     "galleryBanner": {
         "color": "#1e415e",
@@ -111,8 +111,8 @@
         "@types/vscode": "1.78.0",
         "@types/glob": "^8.1.0",
         "@types/node": "16.x",
-        "@typescript-eslint/eslint-plugin": "^8.20.0",
-        "@typescript-eslint/parser": "^8.20.0",
+        "@typescript-eslint/eslint-plugin": "^8.21.0",
+        "@typescript-eslint/parser": "^8.21.0",
         "@vscode/test-electron": "^2.4.1",
         "@vscode/vsce": "^3.2.1",
         "eslint": "^9.18.0",

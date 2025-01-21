@@ -1,0 +1,11 @@
+[project]
+name = "vscode-craft-ls"
+version = "0.1.0"
+description = "A Language Server Protocol implementation for *craft files."
+readme = "README.md"
+authors = [
+  { name = "Alex Batisse", email = "alex.batisse@canonical.com" },
+]
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = ["packaging", "craft-ls"]

@@ -27,72 +27,7 @@ update_sys_path(
     os.getenv("LS_IMPORT_STRATEGY", "useBundled"),
 )
 
-# **********************************************************
-# Imports needed for the language server goes below this.
-# **********************************************************
-# pylint: disable=wrong-import-position,import-error
-import lsprotocol.types as lsp
-from pygls import server
-
-WORKSPACE_SETTINGS = {}
-GLOBAL_SETTINGS = {}
-RUNNER = pathlib.Path(__file__).parent / "lsp_runner.py"
-
-MAX_WORKERS = 5
-LSP_SERVER = server.LanguageServer(
-    name="craft-ls helper", version="1.0.0", max_workers=MAX_WORKERS
-)
-
-
-# **********************************************************
-# Tool specific code goes below this.
-# **********************************************************
-
-# Reference:
-#  LS Protocol:
-#  https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/
-#
-#  Sample implementations:
-#  Pylint: https://github.com/microsoft/vscode-pylint/blob/main/bundled/tool
-#  Black: https://github.com/microsoft/vscode-black-formatter/blob/main/bundled/tool
-#  isort: https://github.com/microsoft/vscode-isort/blob/main/bundled/tool
-
-
-# *****************************************************
-# Logging and notification.
-# *****************************************************
-def log_to_output(
-    message: str, msg_type: lsp.MessageType = lsp.MessageType.Log
-) -> None:
-    LSP_SERVER.show_message_log(message, msg_type)
-
-
-def log_error(message: str) -> None:
-    LSP_SERVER.show_message_log(message, lsp.MessageType.Error)
-    if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["onError", "onWarning", "always"]:
-        LSP_SERVER.show_message(message, lsp.MessageType.Error)
-
-
-def log_warning(message: str) -> None:
-    LSP_SERVER.show_message_log(message, lsp.MessageType.Warning)
-    if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["onWarning", "always"]:
-        LSP_SERVER.show_message(message, lsp.MessageType.Warning)
-
-
-def log_always(message: str) -> None:
-    LSP_SERVER.show_message_log(message, lsp.MessageType.Info)
-    if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["always"]:
-        LSP_SERVER.show_message(message, lsp.MessageType.Info)
-
-
-# *****************************************************
-# Start the server.
-# *****************************************************
-#
 if __name__ == "__main__":
-    try:
-        from craft_ls.server import server as craft_server
-    except ImportError:
-        log_error("craft-ls could not be started.")
-    else:
-        craft_server.start_io()
+    from craft_ls.server import server as craft_server
+
+    craft_server.start_io()
