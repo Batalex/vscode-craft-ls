@@ -42,6 +42,7 @@ def _update_pip_packages(session: nox.Session) -> None:
         "--python-version",
         "3.12",
         "--generate-hashes",
+        "--upgrade",
         "-o",
         "./requirements.txt",
         "./pyproject.toml",
