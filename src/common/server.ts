@@ -63,10 +63,8 @@ async function createServer(
         documentSelector: isVirtualWorkspace()
             ? [{ language: 'python' }]
             : [
-                  { scheme: 'file', language: 'python' },
-                  { scheme: 'untitled', language: 'python' },
-                  { scheme: 'vscode-notebook', language: 'python' },
-                  { scheme: 'vscode-notebook-cell', language: 'python' },
+                  { scheme: 'file', language: 'yaml' },
+                  { scheme: 'untitled', language: 'yaml' },
               ],
         outputChannel: outputChannel,
         traceOutputChannel: outputChannel,
