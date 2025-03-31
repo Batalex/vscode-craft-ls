@@ -2,7 +2,7 @@
     "name": "craft-ls",
     "displayName": "Craft-ls",
     "description": "A Language Server Protocol implementation for *craft files.",
-    "version": "2025.2.0",
+    "version": "2025.3.0",
     "preview": true,
     "serverInfo": {
         "name": "Craft-ls",
