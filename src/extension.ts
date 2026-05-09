@@ -1,106 +1,64 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-
+import * as fs from 'fs';
+import * as path from 'path';
 import * as vscode from 'vscode';
-import { LanguageClient } from 'vscode-languageclient/node';
-import { registerLogger, traceError, traceLog, traceVerbose } from './common/log/logging';
-import {
-    checkVersion,
-    getInterpreterDetails,
-    initializePython,
-    onDidChangePythonInterpreter,
-    resolveInterpreter,
-} from './common/python';
-import { restartServer } from './common/server';
-import { checkIfConfigurationChanged, getInterpreterFromSetting } from './common/settings';
-import { loadServerDefaults } from './common/setup';
-import { getLSClientTraceLevel } from './common/utilities';
-import { createOutputChannel, onDidChangeConfiguration, registerCommand } from './common/vscodeapi';
+import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
-let lsClient: LanguageClient | undefined;
-export async function activate(context: vscode.ExtensionContext): Promise<void> {
-    // This is required to get server name and module. This should be
-    // the first thing that we do in this extension.
-    const serverInfo = loadServerDefaults();
-    const serverName = serverInfo.name;
-    const serverId = serverInfo.module;
+let client: LanguageClient | undefined;
 
-    // Setup logging
-    const outputChannel = createOutputChannel(serverName);
-    context.subscriptions.push(outputChannel, registerLogger(outputChannel));
+function resolveBinary(configuredPath: string): string | undefined {
+    // If an absolute path is configured, check it directly.
+    if (path.isAbsolute(configuredPath)) {
+        return fs.existsSync(configuredPath) ? configuredPath : undefined;
+    }
 
-    const changeLogLevel = async (c: vscode.LogLevel, g: vscode.LogLevel) => {
-        const level = getLSClientTraceLevel(c, g);
-        await lsClient?.setTrace(level);
-    };
-
-    context.subscriptions.push(
-        outputChannel.onDidChangeLogLevel(async (e) => {
-            await changeLogLevel(e, vscode.env.logLevel);
-        }),
-        vscode.env.onDidChangeLogLevel(async (e) => {
-            await changeLogLevel(outputChannel.logLevel, e);
-        }),
-    );
-
-    // Log Server information
-    traceLog(`Name: ${serverInfo.name}`);
-    traceLog(`Module: ${serverInfo.module}`);
-    traceVerbose(`Full Server Info: ${JSON.stringify(serverInfo)}`);
-
-    const runServer = async () => {
-        const interpreter = getInterpreterFromSetting(serverId);
-        if (interpreter && interpreter.length > 0) {
-            if (checkVersion(await resolveInterpreter(interpreter))) {
-                traceVerbose(`Using interpreter from ${serverInfo.module}.interpreter: ${interpreter.join(' ')}`);
-                lsClient = await restartServer(serverId, serverName, outputChannel, lsClient);
-            }
-            return;
+    // Otherwise search PATH entries.
+    const envPath = process.env.PATH ?? '';
+    for (const dir of envPath.split(path.delimiter)) {
+        const candidate = path.join(dir, configuredPath);
+        if (fs.existsSync(candidate)) {
+            return candidate;
         }
+    }
 
-        const interpreterDetails = await getInterpreterDetails();
-        if (interpreterDetails.path) {
-            traceVerbose(`Using interpreter from Python extension: ${interpreterDetails.path.join(' ')}`);
-            lsClient = await restartServer(serverId, serverName, outputChannel, lsClient);
-            return;
-        }
-
-        traceError(
-            'Python interpreter missing:\r\n' +
-                '[Option 1] Select python interpreter using the ms-python.python.\r\n' +
-                `[Option 2] Set an interpreter using "${serverId}.interpreter" setting.\r\n` +
-                'Please use Python 3.8 or greater.',
-        );
-    };
-
-    context.subscriptions.push(
-        onDidChangePythonInterpreter(async () => {
-            await runServer();
-        }),
-        onDidChangeConfiguration(async (e: vscode.ConfigurationChangeEvent) => {
-            if (checkIfConfigurationChanged(e, serverId)) {
-                await runServer();
-            }
-        }),
-        registerCommand(`${serverId}.restart`, async () => {
-            await runServer();
-        }),
-    );
-
-    setImmediate(async () => {
-        const interpreter = getInterpreterFromSetting(serverId);
-        if (interpreter === undefined || interpreter.length === 0) {
-            traceLog(`Python extension loading`);
-            await initializePython(context.subscriptions);
-            traceLog(`Python extension loaded`);
-        } else {
-            await runServer();
-        }
-    });
+    return undefined;
 }
 
-export async function deactivate(): Promise<void> {
-    if (lsClient) {
-        await lsClient.stop();
+export function activate(context: vscode.ExtensionContext) {
+    const config = vscode.workspace.getConfiguration('craft-ls');
+    const configuredPath = config.get<string>('path', 'craft-ls');
+    const binaryPath = resolveBinary(configuredPath);
+
+    if (!binaryPath) {
+        vscode.window
+            .showErrorMessage(
+                `craft-ls binary not found ("${configuredPath}"). Please install craft-ls or set craft-ls.path to the correct location.`,
+                'Open Settings'
+            )
+            .then(selection => {
+                if (selection === 'Open Settings') {
+                    vscode.commands.executeCommand('workbench.action.openSettings', 'craft-ls.path');
+                }
+            });
+        return;
     }
+
+    const serverOptions: ServerOptions = {
+        command: binaryPath,
+        args: [],
+    };
+
+    const clientOptions: LanguageClientOptions = {
+        documentSelector: [
+            { language: 'yaml', pattern: '**/{snapcraft,rockcraft,charmcraft}.yaml' },
+            { language: 'yaml', pattern: '**/{metadata,config,actions}.yaml' },
+        ],
+    };
+
+    client = new LanguageClient('craft-ls', 'Craft Language Server', serverOptions, clientOptions);
+    client.start();
+    context.subscriptions.push(client);
+}
+
+export function deactivate(): Thenable<void> | undefined {
+    return client?.stop();
 }
