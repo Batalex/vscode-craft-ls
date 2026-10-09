@@ -1,126 +1,76 @@
 {
     "name": "craft-ls",
-    "displayName": "Craft-ls",
-    "description": "A Language Server Protocol implementation for *craft files.",
-    "version": "2025.10.1",
-    "preview": true,
-    "serverInfo": {
-        "name": "Craft-ls",
-        "module": "craft-ls"
-    },
+    "displayName": "craft-ls",
+    "description": "Language server for *craft files (snapcraft.yaml, rockcraft.yaml, charmcraft.yaml).",
+    "version": "2026.10.0",
     "publisher": "abatisse",
-    "license": "MIT",
-    "homepage": "https://github.com/Batalex/vscode-craft-ls",
+    "license": "BSD-3-Clause",
     "repository": {
         "type": "git",
-        "url": "https://github.com/Batalex/vscode-craft-ls.git"
+        "url": "https://github.com/batalex/craft-ls"
     },
-    "bugs": {
-        "url": "https://github.com/Batalex/vscode-craft-ls/issues"
-    },
-    "galleryBanner": {
-        "color": "#1e415e",
-        "theme": "dark"
-    },
-    "keywords": [
-        "python",
-        "craft-ls"
-    ],
     "engines": {
-        "vscode": "^1.78.0"
+        "vscode": "^1.90.0"
     },
     "categories": [
-        "Programming Languages",
-        "Linters",
-        "Formatters"
+        "Programming Languages"
     ],
-    "extensionDependencies": [
-        "ms-python.python"
+    "keywords": [
+        "lsp",
+        "snapcraft",
+        "rockcraft",
+        "charmcraft",
+        "yaml"
     ],
+    "activationEvents": [
+        "onLanguage:yaml"
+    ],
+    "main": "./dist/extension.js",
     "capabilities": {
         "virtualWorkspaces": {
             "supported": false,
-            "description": "Virtual Workspaces are not supported with Craft-ls."
+            "description": "The language server needs access to real *craft files on disk."
         }
-    },
-    "activationEvents": [
-        "onLanguage:yaml",
-        "workspaceContains:*.yaml"
-    ],
-    "main": "./dist/extension.js",
-    "scripts": {
-        "vscode:prepublish": "npm run package",
-        "compile": "webpack",
-        "watch": "webpack --watch",
-        "package": "webpack --mode production --devtool source-map --config ./webpack.config.js",
-        "compile-tests": "tsc -p . --outDir out",
-        "watch-tests": "tsc -p . -w --outDir out",
-        "pretest": "npm run compile-tests && npm run compile && npm run lint",
-        "lint": "eslint src --ext ts",
-        "format-check": "prettier --check 'src/**/*.ts' 'build/**/*.yml' '.github/**/*.yml'",
-        "test": "node ./out/test/runTest.js",
-        "vsce-package": "vsce package -o craft-ls.vsix"
     },
     "contributes": {
         "configuration": {
+            "title": "craft-ls",
             "properties": {
-                "craft-ls.interpreter": {
-                    "default": [],
-                    "description": "When set to a path to python executable, extension will use that to launch the server and any subprocess.",
-                    "scope": "resource",
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": "array"
-                },
-                "craft-ls.showNotifications": {
-                    "default": "off",
-                    "description": "Controls when notifications are shown by this extension.",
-                    "enum": [
-                        "off",
-                        "onError",
-                        "onWarning",
-                        "always"
-                    ],
-                    "enumDescriptions": [
-                        "All notifications are turned off, any errors or warning are still available in the logs.",
-                        "Notifications are shown only in the case of an error.",
-                        "Notifications are shown for errors and warnings.",
-                        "Notifications are show for anything that the server chooses to show."
-                    ],
-                    "scope": "machine",
-                    "type": "string"
+                "craft-ls.serverPath": {
+                    "type": "string",
+                    "default": "",
+                    "markdownDescription": "Path to the `craft-ls` executable. Leave empty to resolve the binary from the `PATH`.",
+                    "scope": "machine-overridable"
                 }
             }
         },
         "commands": [
             {
+                "command": "craft-ls.restart",
                 "title": "Restart Server",
-                "category": "Craft-ls",
-                "command": "craft-ls.restart"
+                "category": "Craft-ls"
             }
         ]
     },
-    "dependencies": {
-        "@vscode/python-extension": "^1.0.6",
-        "fs-extra": "^11.3.2",
-        "vscode-languageclient": "^8.1.0"
+    "scripts": {
+        "compile": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --target=node20 --sourcemap",
+        "watch": "npm run compile -- --watch",
+        "lint": "tsc --noEmit && eslint src",
+        "vsce-package": "npx vsce package -o craft-ls.vsix",
+        "publish": "npx vsce publish --packagePath craft-ls.vsix",
+        "vscode:prepublish": "npm run compile -- --minify"
     },
     "devDependencies": {
-        "@types/fs-extra": "^11.0.4",
-        "@types/vscode": "1.78.0",
-        "@types/glob": "^9.0.0",
-        "@types/node": "16.x",
-        "@typescript-eslint/eslint-plugin": "^8.46.2",
-        "@typescript-eslint/parser": "^8.46.2",
-        "@vscode/test-electron": "^2.5.2",
-        "@vscode/vsce": "^3.6.2",
-        "eslint": "^9.38.0",
-        "glob": "^11.0.3",
-        "prettier": "^3.6.2",
-        "typescript": "^5.9.3",
-        "ts-loader": "^9.5.4",
-        "webpack": "^5.102.1",
-        "webpack-cli": "^6.0.1"
+        "@eslint/js": "^9.39.5",
+        "@types/node": "^22.5.0",
+        "@types/vscode": "^1.90.0",
+        "@vscode/vsce": "^3.0.0",
+        "esbuild": "^0.24.0",
+
+        "eslint": "^9.0.0",
+        "prettier": "^3.3.0",
+        "typescript": "^5.5.0",
+        "typescript-eslint": "^8.71.1",
+        "vscode-languageclient": "^9.0.1"
     }
 }

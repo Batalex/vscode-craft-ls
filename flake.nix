@@ -2,6 +2,7 @@
   description = "VSCode craft-ls extension development flake";
 
   inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     utils.url = "github:numtide/flake-utils";
   };
 
@@ -15,10 +16,10 @@
       pkgs = import nixpkgs {inherit system;};
     in {
       devShells.default = pkgs.mkShell {
+        name = "craft-ls-ext";
+
         packages = with pkgs; [
-          uv
-          python312Packages.nox
-          nodejs_22
+          nodejs_24
         ];
       };
     });
