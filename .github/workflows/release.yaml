@@ -6,6 +6,10 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: read
+  id-token: write # required for marketplace trusted publishing (OIDC)
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -18,10 +22,23 @@ jobs:
       - run: npm ci
       - run: npx vsce package -o craft-ls.vsix
 
-      - name: Publish to VSCode Marketplace
+      # Marketplace trusted publishing (OIDC) is not rolled out yet:
+      # the token-exchange endpoint replies "Trusted Publishing is not supported".
+      # Try OIDC first so it starts working the moment the feature ships;
+      # fall back to a classic PAT stored in the VSCE_PAT repository secret.
+      - name: Publish to VSCode Marketplace (OIDC, falls back to PAT)
         env:
-          VSCE_PAT: ${{ secrets.MARKETPLACE_TOKEN }}
-        run: npx vsce publish --packagePath craft-ls.vsix
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if npx vsce publish --oidc --packagePath craft-ls.vsix; then
+            echo "Published via OIDC trusted publishing."
+          elif [ -n "$VSCE_PAT" ]; then
+            echo "OIDC rejected by the Marketplace; publishing with PAT."
+            npx vsce publish --packagePath craft-ls.vsix
+          else
+            echo "OIDC rejected and no VSCE_PAT secret configured." >&2
+            exit 1
+          fi
 
       - name: Create GitHub release
         if: startsWith(github.ref, 'refs/tags/')
